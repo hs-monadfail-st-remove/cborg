@@ -170,14 +170,15 @@ decodePreEncoded bs0 =
               -- always starts by requesting initial input. Only decoders that
               -- fail or return a value without looking at their input can give
               -- a different initial result.
-              Read.Partial k <- Read.deserialiseIncremental decodeTermToken
+              partial_k <- Read.deserialiseIncremental decodeTermToken
+              let Read.Partial k = partial_k
               k (Just bs)
           collectOutput next
 
     collectOutput :: Read.IDecode s TermToken -> ST.Lazy.ST s FlatTerm
-    collectOutput (Read.Fail _ _ err) = fail $ "toFlatTerm: encodePreEncoded "
-                                            ++ "used with invalid CBOR: "
-                                            ++ show err
+    collectOutput (Read.Fail _ _ err) = error $ "toFlatTerm: encodePreEncoded "
+                                             ++ "used with invalid CBOR: "
+                                             ++ show err
     collectOutput (Read.Partial    k) = ST.Lazy.strictToLazyST (k Nothing)
                                         >>= collectOutput
     collectOutput (Read.Done bs' _ x) = do xs <- provideInput bs'
